@@ -37,7 +37,7 @@ func run() error {
 			w.Header().Set("Content-Type", "application/json")
 			data, _ := json.MarshalIndent(p.Character, "", "\t")
 			w.Write(data)
-		// For debugging purpose,
+			// For debugging purpose,
 		} else if r.Method == "HEAD" {
 			w.WriteHeader(http.StatusOK)
 		} else {

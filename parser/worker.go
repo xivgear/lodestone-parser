@@ -7,9 +7,9 @@ import (
 )
 
 type Worker struct {
-	DataChan  chan string
+	DataChan   chan string
 	ReturnChan chan *character.Character
-	waitGroup sync.WaitGroup
+	waitGroup  sync.WaitGroup
 }
 
 func (w *Worker) Listen() {
@@ -25,7 +25,7 @@ func (w *Worker) Listen() {
 				if err := character.ParseCharacterData(); err != nil {
 					log.Println(err)
 				}
-				w.ReturnChan <-character
+				w.ReturnChan <- character
 
 				w.waitGroup.Done()
 			}
@@ -42,7 +42,7 @@ func NewWorker() *Worker {
 	var dataChan = make(chan string)
 	var returnChan = make(chan *character.Character)
 	w := &Worker{
-		DataChan: dataChan,
+		DataChan:   dataChan,
 		ReturnChan: returnChan,
 	}
 	w.Listen()
