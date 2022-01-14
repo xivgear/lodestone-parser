@@ -7,21 +7,26 @@ import (
 )
 
 type Worker struct {
-	dataChan  chan string
+	DataChan  chan string
+	ReturnChan chan *character.Character
 	waitGroup sync.WaitGroup
 }
 
 func (w *Worker) Listen() {
 	go func() {
+		defer close(w.DataChan)
+		defer close(w.ReturnChan)
 		for {
 			select {
-			case item := <-w.dataChan:
+			case item := <-w.DataChan:
 				w.waitGroup.Add(1)
 				log.Println("received data", item)
-				charParser := character.NewCharacter(item)
-				if err := charParser.ParseCharacterData(); err != nil {
+				character := character.NewCharacter(item)
+				if err := character.ParseCharacterData(); err != nil {
 					log.Println(err)
 				}
+				w.ReturnChan <-character
+
 				w.waitGroup.Done()
 			}
 		}
@@ -33,9 +38,12 @@ func (w *Worker) Stop() {
 	w.waitGroup.Wait()
 }
 
-func NewWorker(data chan string) *Worker {
+func NewWorker() *Worker {
+	var dataChan = make(chan string)
+	var returnChan = make(chan *character.Character)
 	w := &Worker{
-		dataChan: data,
+		DataChan: dataChan,
+		ReturnChan: returnChan,
 	}
 	w.Listen()
 	return w

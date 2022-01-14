@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/xivgear/lodestone-parser/parser"
 	"log"
@@ -16,11 +17,9 @@ func main() {
 }
 
 func run() error {
-	var dataTransmitChan = make(chan string)
-	defer close(dataTransmitChan)
+	// Create worker which will spawn a new go routine
+	w := parser.NewWorker()
 
-	// Create worker in new go routine and give him the channel to push data to it
-	w := parser.NewWorker(dataTransmitChan)
 	defer func() {
 		// Todo: This should go live when doing stuff later
 		// sc := make(chan os.Signal, 1)
@@ -34,17 +33,28 @@ func run() error {
 	// testing worker foo. todo: remove :-)
 	var characters = []string{"11756305", "21541412"}
 	characters = []string{"11756305"}
-	characters = []string{"9384803"}
 
 	func() {
 		for _, id := range characters {
 			log.Println("id =", id)
-			dataTransmitChan <- id
+			w.DataChan <- id
 		}
 	}()
 
+	for {
+		select {
+		case character := <-w.ReturnChan:
+			bytes, err := json.Marshal(character)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Println(string(bytes))
+		}
+	}
+
 	// Todo: This is for debug only! Remove or do only on debug flag...
-	<-time.After(500 * time.Millisecond)
+	<-time.After(1 * time.Second)
 
 	return nil
 }
