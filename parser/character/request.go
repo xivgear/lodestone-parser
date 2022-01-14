@@ -2,8 +2,10 @@ package character
 
 import (
 	"io/ioutil"
+	"net"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var LodestoneUrl = map[string]string{
@@ -52,8 +54,22 @@ func (c *Character) requestLodestone() error {
 }
 
 func request(url string) (string, error) {
+	OKAddr := "192.168.122.1" // local IP address to use
 
-	resp, err := http.Get(url)
+	OKAddress, _ := net.ResolveTCPAddr("tcp", OKAddr)
+
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			LocalAddr:    OKAddress}).Dial, TLSHandshakeTimeout: 10 * time.Second}
+
+	client := &http.Client{
+		Transport: transport,
+	}
+
+	resp, err := client.Get(url)
 	if err != nil {
 		return "", err
 	}
